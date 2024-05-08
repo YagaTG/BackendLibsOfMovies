@@ -7,10 +7,22 @@ const createPlaylist = (req, res) => {
     `INSERT INTO playlists_table (uid, name, description, img, movies) VALUES ('${userId}','${name}', '${description}', '', '${playlist}')`,
     function (err, rows, fields) {
       if (err) throw err;
-      console.log("Playlist created: ", rows);
+      console.log("Playlist created");
+      res.json({ message: "succes" });
+    }
+  );
+};
+
+const getUserPlaylists = (req, res) => {
+  const { userId } = req.query;
+  connection.query(
+    `SELECT * FROM playlists_table WHERE uid = '${userId}'`,
+    function (err, rows, fields) {
+      if (err) throw err;
+      console.log("User Playlists: ", rows);
       res.json(rows);
     }
   );
 };
 
-module.exports = { createPlaylist };
+module.exports = { getUserPlaylists, createPlaylist };
