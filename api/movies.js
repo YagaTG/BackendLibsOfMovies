@@ -11,4 +11,16 @@ const ratingMovie = (req, res) => {
       
 };
 
-module.exports = { ratingMovie };
+const searchMovie = (req, res) => {
+  const { movieName } = req.query;
+  connection.query(
+    `SELECT * FROM movies WHERE name LIKE '%${movieName}%'`,
+    function (err, rows, fields) {
+      if (err) throw err;
+      console.log("Movies matched: ", rows);
+      res.json(rows);
+    }
+  );
+}
+
+module.exports = { ratingMovie, searchMovie };
