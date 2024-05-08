@@ -8,8 +8,23 @@ const passport = require("passport");
 const { Strategy } = require("passport-local");
 
 const { getMovieComments } = require("./api/comments");
-const { getOutcommingFriendsRequests, getIncommingFriendsRequests } = require("./api/user");
+const {
+  getOutcommingFriendsRequests,
+  getIncommingFriendsRequests,
+  registerUser,
+  searchUser,
+  inviteFriend,
+  dismissRequest,
+  addFriend,
+  addUserAvatar,
+  getUserAvatar,
+} = require("./api/user");
+const { comparePassword } = require("./utils/helpers");
+const { searchMovie } = require("./api/movies");
 const MySQLStore = require("express-mysql-session")(session);
+
+const fs = require("fs");
+const { createPlaylist, getUserPlaylists } = require("./api/playlists");
 
 const options = {
   host: "localhost",
@@ -60,13 +75,18 @@ passport.use(
     console.log(`Username: ${username}`);
     try {
       await connection.query(
-        `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`,
+        `SELECT * FROM users WHERE username = '${username}'`,
         function (err, rows, fields) {
           if (err) throw err;
           console.log("The solution is: ", rows);
-          if (rows[0]) done(null, rows[0]);
-          else {
-            throw new Error("Invalid Credetials");
+          if (rows[0]) {
+            if (comparePassword(password, rows[0].password)) {
+              done(null, rows[0]);
+            } else {
+              throw new Error("Invalid Credentials");
+            }
+          } else {
+            throw new Error("This user not exists");
           }
         }
       );
@@ -108,11 +128,11 @@ app.use(passport.session());
 
 const PORT = 3500;
 
-app.use(cors({ origin: "http://192.168.0.103:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
+app.use(cors({ origin: "http://192.168.0.101:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
 
 app.all("/api/loginUser", function (req, res, next) {
   res.set({
-    "Access-Control-Allow-Origin": "http://192.168.0.103:5173",
+    "Access-Control-Allow-Origin": "http://192.168.0.101:5173",
     "Access-Control-Allow-Credentials": "true",
   });
   next();
@@ -143,17 +163,30 @@ app.post("/api/loginUser", passport.authenticate("local"), (req, res) => {
   console.log(req.body);
   console.log(req.user);
   if (req.user) {
-    const { id, username, mail } = req.user;
-    res.json({ id, username, mail });
+    const { id, username, mail, friends } = req.user;
+    res.json({ id, username, mail, friends });
   } else {
     res.json({ messsage: "BAD" });
   }
 });
 
+app.post("/api/registerUser", registerUser);
+
+app.get("/api/searchUser", searchUser);
+
+app.post("/api/inviteFriend", inviteFriend);
+
+app.post("/api/dismissFriendRequest", dismissRequest);
+
+app.post("/api/addFriend", addFriend);
+
+app.post("/api/addUserAvatar", addUserAvatar);
+
+app.get("/api/getUserAvatar", getUserAvatar);
+
 app.get("/api/getAllMovies", (req, res) => {
   connection.query(`SELECT * FROM movies`, function (err, rows, fields) {
     if (err) throw err;
-    console.log("The solution is: ", rows);
     res.json(rows);
   });
 });
@@ -165,11 +198,41 @@ app.get("/api/getMovieData", (req, res) => {
     `SELECT * FROM movies where id='${movieId}'`,
     function (err, rows, fields) {
       if (err) throw err;
-      console.log("The solution is: ", rows[0]);
       // console.log(fields);
       res.json(rows[0]);
     }
   );
+});
+
+app.get("/api/searchMovie", searchMovie);
+
+app.get("/api/getTrailer", (req, res) => {
+  console.log("--- Загрузка видео ---");
+  const range = req.headers.range;
+  console.log(range);
+  const videoPath = "./test.mp4";
+  const videoSize = fs.statSync(videoPath).size;
+  console.log(videoSize);
+  const chunkVideo = 1 * 1e6;
+  const start = Number(range.replace(/\D/g, ""));
+  console.log(start);
+  const end = Math.min(start + chunkVideo, videoSize - 1);
+  console.log("Конец", end);
+  const contentLength = end - start + 1;
+  console.log("Длина контента", contentLength);
+  const headers = {
+    "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+    "Accept-Ranges": "bytes",
+    "Content-Length": contentLength,
+    "Content-Type": "video/mp4",
+  };
+
+  res.writeHead(206, headers);
+  const stream = fs.createReadStream(videoPath, {
+    start,
+    end,
+  });
+  stream.pipe(res);
 });
 
 app.get("/api/getMovieComments", getMovieComments);
@@ -179,8 +242,7 @@ app.post("/api/createComment", (req, res) => {
     res.status(401);
     res.send("Unauthorized");
   } else {
-    const {authorId, authorUsername, movieId, text} = req.body
-    console.log(req.body)
+    const { authorId, authorUsername, movieId, text } = req.body;
     connection.query(
       `INSERT INTO comments (authorId, authorUsername, movieId, text) VALUES ('${authorId}', '${authorUsername}', '${movieId}', '${text}')`,
       function (err, rows, fields) {
@@ -188,7 +250,6 @@ app.post("/api/createComment", (req, res) => {
         res.json({ messsage: "sucess" });
       }
     );
-    
   }
 });
 
@@ -207,6 +268,10 @@ app.get("/api/getMovieReviews", (req, res) => {
 app.get("/api/getFriendsRequests", getOutcommingFriendsRequests);
 
 app.get("/api/getIncommingFriendsRequests", getIncommingFriendsRequests);
+
+app.post("/api/createPlaylist", createPlaylist);
+
+app.get("/api/getUserPlaylists", getUserPlaylists);
 
 app.listen(PORT, () => {
   console.log(`Example app listening on http://localhost:${PORT}`);
