@@ -10,4 +10,12 @@ const connection = mysql.createConnection({
 
 // connection.connect();
 
-module.exports = connection;
+const { Sequelize } = require("sequelize");
+
+const sequelize = new Sequelize("libs_of_movies", "root", "mysql", {
+  host: "localhost",
+  dialect:
+    "mysql" /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */,
+});
+
+module.exports = { connection, sequelize };

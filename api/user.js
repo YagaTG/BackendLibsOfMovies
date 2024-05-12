@@ -1,4 +1,4 @@
-const connection = require("../db");
+const { connection } = require("../db");
 const { hashPassword } = require("../utils/helpers");
 const fs = require("fs");
 
@@ -171,7 +171,7 @@ const getUserAvatar = (req, res) => {
     `SELECT img FROM users WHERE username = '${username}'`,
     function (err, rows, fields) {
       if (err) throw err;
-      console.log("Friend request deleted", rows);
+      console.log("User Avatar: ", rows);
       if (!fs.existsSync(__dirname.replace("api", "") + rows[0].img)) {
         res.sendStatus(404);
       } else {

@@ -1,4 +1,4 @@
-const connection = require("../db");
+const { connection } = require("../db");
 const createPlaylist = (req, res) => {
   const { name, description, playlist, userId } = req.body;
   console.log(playlist);

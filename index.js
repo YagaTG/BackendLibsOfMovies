@@ -1,5 +1,5 @@
 const express = require("express");
-const connection = require("./db");
+const { connection } = require("./db");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
@@ -7,7 +7,7 @@ const session = require("express-session");
 const passport = require("passport");
 const { Strategy } = require("passport-local");
 
-const { getMovieComments } = require("./api/comments");
+const { getMovieComments, createComment } = require("./api/comments");
 const {
   getOutcommingFriendsRequests,
   getIncommingFriendsRequests,
@@ -20,11 +20,13 @@ const {
   getUserAvatar,
 } = require("./api/user");
 const { comparePassword } = require("./utils/helpers");
-const { searchMovie } = require("./api/movies");
+const { searchMovie, getAllMovies, getMovieData } = require("./api/movies");
 const MySQLStore = require("express-mysql-session")(session);
 
 const fs = require("fs");
 const { createPlaylist, getUserPlaylists } = require("./api/playlists");
+const { createServer } = require("node:http");
+const { Server } = require("socket.io");
 
 const options = {
   host: "localhost",
@@ -44,6 +46,8 @@ const options = {
 
 const sessionStore = new MySQLStore(options);
 const app = express();
+const server = createServer(app);
+const io = new Server(server);
 
 passport.serializeUser((user, done) => {
   console.log("Inside serialize");
@@ -128,11 +132,11 @@ app.use(passport.session());
 
 const PORT = 3500;
 
-app.use(cors({ origin: "http://192.168.0.101:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
+app.use(cors({ origin: "http://192.168.0.198:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
 
 app.all("/api/loginUser", function (req, res, next) {
   res.set({
-    "Access-Control-Allow-Origin": "http://192.168.0.101:5173",
+    "Access-Control-Allow-Origin": "http://192.168.0.198:5173",
     "Access-Control-Allow-Credentials": "true",
   });
   next();
@@ -142,17 +146,6 @@ app.get("/", (req, res) => {
   console.log(req.session);
   console.log(req.session.id);
   res.json({ messsage: "Сервер запущен" });
-});
-
-app.get("/status", (req, res) => {
-  // console.log(req.user);
-  res.set({
-    "Access-Control-Allow-Credentials": "true",
-  });
-  console.log("------");
-  console.log(req.user);
-  // if(!req.user) res.json({status: "BAD"});
-  res.json({ staus: "OK" });
 });
 
 app.post("/api/loginUser", passport.authenticate("local"), (req, res) => {
@@ -184,25 +177,9 @@ app.post("/api/addUserAvatar", addUserAvatar);
 
 app.get("/api/getUserAvatar", getUserAvatar);
 
-app.get("/api/getAllMovies", (req, res) => {
-  connection.query(`SELECT * FROM movies`, function (err, rows, fields) {
-    if (err) throw err;
-    res.json(rows);
-  });
-});
+app.get("/api/getAllMovies", getAllMovies);
 
-app.get("/api/getMovieData", (req, res) => {
-  console.log(req.query);
-  const { movieId } = req.query;
-  connection.query(
-    `SELECT * FROM movies where id='${movieId}'`,
-    function (err, rows, fields) {
-      if (err) throw err;
-      // console.log(fields);
-      res.json(rows[0]);
-    }
-  );
-});
+app.get("/api/getMovieData", getMovieData);
 
 app.get("/api/searchMovie", searchMovie);
 
@@ -237,21 +214,7 @@ app.get("/api/getTrailer", (req, res) => {
 
 app.get("/api/getMovieComments", getMovieComments);
 
-app.post("/api/createComment", (req, res) => {
-  if (!req.user) {
-    res.status(401);
-    res.send("Unauthorized");
-  } else {
-    const { authorId, authorUsername, movieId, text } = req.body;
-    connection.query(
-      `INSERT INTO comments (authorId, authorUsername, movieId, text) VALUES ('${authorId}', '${authorUsername}', '${movieId}', '${text}')`,
-      function (err, rows, fields) {
-        if (err) throw err;
-        res.json({ messsage: "sucess" });
-      }
-    );
-  }
-});
+app.post("/api/createComment", createComment);
 
 app.get("/api/getMovieReviews", (req, res) => {
   const { movieId } = req.query;
@@ -273,6 +236,6 @@ app.post("/api/createPlaylist", createPlaylist);
 
 app.get("/api/getUserPlaylists", getUserPlaylists);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Example app listening on http://localhost:${PORT}`);
 });
