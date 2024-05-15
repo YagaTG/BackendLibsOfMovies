@@ -132,11 +132,11 @@ app.use(passport.session());
 
 const PORT = 3500;
 
-app.use(cors({ origin: "http://192.168.0.198:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
+app.use(cors({ origin: "http://192.168.0.103:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
 
 app.all("/api/loginUser", function (req, res, next) {
   res.set({
-    "Access-Control-Allow-Origin": "http://192.168.0.198:5173",
+    "Access-Control-Allow-Origin": "http://192.168.0.103:5173",
     "Access-Control-Allow-Credentials": "true",
   });
   next();
