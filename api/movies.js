@@ -12,7 +12,7 @@ const getMovieData = (req, res) => {
   console.log(req.query);
   const { movieId } = req.query;
   Movie.findOne({ where: { id: movieId } }).then((data) => {
-    console.log(data), res.json(data);
+    res.json(data);
   });
 };
 
