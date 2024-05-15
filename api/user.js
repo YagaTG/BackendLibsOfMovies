@@ -1,4 +1,5 @@
 const { connection } = require("../db");
+const { User } = require("../models/UserModel");
 const { hashPassword } = require("../utils/helpers");
 const fs = require("fs");
 
@@ -167,18 +168,18 @@ const addUserAvatar = (req, res) => {
 
 const getUserAvatar = (req, res) => {
   const { username } = req.query;
-  connection.query(
-    `SELECT img FROM users WHERE username = '${username}'`,
-    function (err, rows, fields) {
-      if (err) throw err;
-      console.log("User Avatar: ", rows);
-      if (!fs.existsSync(__dirname.replace("api", "") + rows[0].img)) {
+  User.findOne({ where: { username: username } })
+    .then((data) => {
+      if (!fs.existsSync(__dirname.replace("api", "") + data.img)) {
         res.sendStatus(404);
       } else {
-        res.sendFile(__dirname.replace("api", "") + rows[0].img);
+        res.sendFile(__dirname.replace("api", "") + data.img);
       }
-    }
-  );
+    })
+    .catch((e) => {
+      console.log(e);
+      res.status(404).json(e);
+    });
 };
 
 module.exports = {
