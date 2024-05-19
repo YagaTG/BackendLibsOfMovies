@@ -1,28 +1,36 @@
 const { connection } = require("../db");
+const { Playlist } = require("../models/PlaylistModel");
 const createPlaylist = (req, res) => {
   const { name, description, playlist, userId } = req.body;
   console.log(playlist);
   console.log(userId);
-  connection.query(
-    `INSERT INTO playlists_table (uid, name, description, img, movies) VALUES ('${userId}','${name}', '${description}', '', '${playlist}')`,
-    function (err, rows, fields) {
-      if (err) throw err;
-      console.log("Playlist created");
-      res.json({ message: "succes" });
-    }
-  );
+  Playlist.create({
+    uid: userId,
+    name: name,
+    description: description,
+    playlist: playlist,
+  })
+    .then((data) => res.json({ message: "succes" }))
+    .catch((err) => {
+      console.log(err);
+      res.status(404).json(err);
+    });
 };
 
 const getUserPlaylists = (req, res) => {
   const { userId } = req.query;
-  connection.query(
-    `SELECT * FROM playlists_table WHERE uid = '${userId}'`,
-    function (err, rows, fields) {
-      if (err) throw err;
-      console.log("User Playlists: ", rows);
-      res.json(rows);
-    }
-  );
+  Playlist.findAll({ where: { uid: userId } })
+    .then((data) => res.json(data))
+    .catch((err) => {
+      console.log(err);
+      res.status(404).json(err);
+    });
 };
 
-module.exports = { getUserPlaylists, createPlaylist };
+const deletePlaylist = (req, res) => {
+  // Playlist.de
+};
+
+const editPlaylist = (req, res) => {};
+
+module.exports = { getUserPlaylists, createPlaylist, deletePlaylist };
