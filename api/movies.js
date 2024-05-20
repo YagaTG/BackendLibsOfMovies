@@ -1,7 +1,6 @@
-const { connection } = require("../db");
 const { Op } = require("sequelize");
 const { Movie } = require("../models/MovieModel");
-const { RatingModel } = require("../models");
+const { RatingModel, MovieModel } = require("../models");
 
 const getAllMovies = (req, res) => {
   Movie.findAll().then((data) => {
@@ -33,7 +32,21 @@ const ratingMovie = (req, res) => {
       userId: userId,
       movieId: movieId,
       rating: rating,
-    }).then((data) => res.json({ status: "succes" }));
+    }).then((data) => {
+      RatingModel.findAll({
+        where: { movieId: movieId },
+        attributes: ["rating"],
+      }).then((movies) => {
+        let sumMovieRatings = movies.reduce(
+          (sum, current) => sum + current.dataValues.rating,
+          0
+        );
+        let movieRating = sumMovieRatings / movies.length;
+        Movie.update({ rating: movieRating }, { where: { id: movieId } })
+          .then((status) => res.json(status))
+          .catch((err) => res.status(404).json(err));
+      });
+    });
   }
 };
 
