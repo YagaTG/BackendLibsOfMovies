@@ -26,15 +26,6 @@ const upload = multer({ storage: storage }).single("file");
 
 const logout = (req, res) => {
   req.user = null;
-  // connection.query(
-  //     `DELETE * FROM movies where id='${movieId}'`,
-  //     function (err, rows, fields) {
-  //       if (err) throw err;
-  //       console.log("The solution is: ", rows[0]);
-  //       // console.log(fields);
-  //       res.json(rows[0]);
-  //     }
-  //   );
 };
 
 const getMe = (req, res) => {
@@ -222,7 +213,12 @@ const getMyMoviesRatings = (req, res) => {
   const { userId } = req.query;
   RatingModel.findAll({
     where: { userId: userId },
-    include: [{ model: Movie, attributes: ["name"] }],
+    include: [
+      {
+        model: Movie,
+        attributes: ["name", "year", ["rating", "movieRating"]],
+      },
+    ],
   })
     .then((data) => res.json(data))
     .catch((err) => res.status(404).json(err));

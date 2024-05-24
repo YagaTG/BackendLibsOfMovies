@@ -42,7 +42,10 @@ const ratingMovie = (req, res) => {
           0
         );
         let movieRating = sumMovieRatings / movies.length;
-        Movie.update({ rating: movieRating }, { where: { id: movieId } })
+        Movie.update(
+          { rating: movieRating.toFixed(1) },
+          { where: { id: movieId } }
+        )
           .then((status) => res.json(status))
           .catch((err) => res.status(404).json(err));
       });
