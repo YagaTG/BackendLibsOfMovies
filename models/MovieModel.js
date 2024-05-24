@@ -6,6 +6,7 @@ const Movie = sequelize.define(
   {
     name: DataTypes.STRING,
     description: DataTypes.TEXT,
+    year: DataTypes.INTEGER,
     rating: { type: DataTypes.FLOAT, defaultValue: 0 },
     img: DataTypes.STRING,
   },
