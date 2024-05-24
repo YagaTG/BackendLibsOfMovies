@@ -1,5 +1,6 @@
 const { sequelize } = require("../db");
 const { DataTypes } = require("sequelize");
+const { Movie } = require("./MovieModel");
 
 const RatingModel = sequelize.define(
   "rating",
@@ -12,5 +13,7 @@ const RatingModel = sequelize.define(
 );
 
 RatingModel.removeAttribute("id");
+
+RatingModel.belongsTo(Movie, { foreignKey: "movieId" });
 
 module.exports = { RatingModel };

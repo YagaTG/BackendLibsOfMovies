@@ -1,4 +1,6 @@
 const { connection } = require("../db");
+const { RatingModel } = require("../models");
+const { Movie } = require("../models/MovieModel");
 const { User } = require("../models/UserModel");
 const { hashPassword } = require("../utils/helpers");
 const fs = require("fs");
@@ -33,6 +35,18 @@ const logout = (req, res) => {
   //       res.json(rows[0]);
   //     }
   //   );
+};
+
+const getMe = (req, res) => {
+  const { userId } = req.query;
+  // console.log(req.user);
+  if (req.user && req.user.id == userId) {
+    User.findOne({ where: { id: userId } })
+      .then((data) => res.json(data))
+      .catch((err) => res.status(404).json(err));
+  } else {
+    res.status(401).json({ status: "Unlogin" });
+  }
 };
 
 const registerUser = (req, res) => {
@@ -84,7 +98,6 @@ const getOutcommingFriendsRequests = (req, res) => {
       res.json(rows);
     }
   );
-  // SELECT incoming_user, username FROM friend_requests JOIN users ON incoming_user = users.id WHERE outcomming_user = 2
 };
 
 const getIncommingFriendsRequests = (req, res) => {
@@ -98,7 +111,6 @@ const getIncommingFriendsRequests = (req, res) => {
       res.json(rows);
     }
   );
-  // SELECT incoming_user, username FROM friend_requests JOIN users ON incoming_user = users.id WHERE outcomming_user = 2
 };
 
 const inviteFriend = (req, res) => {
@@ -142,6 +154,30 @@ const addFriend = (req, res) => {
   );
 };
 
+const deleteFriend = (req, res) => {
+  const { userId, newUserFriendsList, friendId } = req.body;
+  console.log(userId, newUserFriendsList, friendId);
+  User.update(
+    { friends: JSON.parse(newUserFriendsList) },
+    { where: { id: userId } }
+  )
+    .then(() => {
+      User.findOne({ where: { id: friendId } })
+        .then((data) => {
+          const oldFriendsList = [...data.dataValues.friends];
+
+          const newFriendsList = oldFriendsList.filter(
+            (friend) => friend.id != userId
+          );
+          User.update({ friends: newFriendsList }, { where: { id: friendId } })
+            .then(() => res.json({ message: "success" }))
+            .catch((err) => res.status(404).json(err));
+        })
+        .catch((err) => res.status(403).json(err));
+    })
+    .catch((err) => res.status(402).json(err));
+};
+
 const addUserAvatar = (req, res) => {
   upload(req, res, (err) => {
     if (err) {
@@ -182,7 +218,18 @@ const getUserAvatar = (req, res) => {
     });
 };
 
+const getMyMoviesRatings = (req, res) => {
+  const { userId } = req.query;
+  RatingModel.findAll({
+    where: { userId: userId },
+    include: [{ model: Movie, attributes: ["name"] }],
+  })
+    .then((data) => res.json(data))
+    .catch((err) => res.status(404).json(err));
+};
+
 module.exports = {
+  getMe,
   getOutcommingFriendsRequests,
   getIncommingFriendsRequests,
   registerUser,
@@ -190,6 +237,8 @@ module.exports = {
   dismissRequest,
   inviteFriend,
   addFriend,
+  deleteFriend,
   addUserAvatar,
   getUserAvatar,
+  getMyMoviesRatings,
 };
