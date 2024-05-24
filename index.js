@@ -18,15 +18,30 @@ const {
   addFriend,
   addUserAvatar,
   getUserAvatar,
+  getMyMoviesRatings,
+  deleteFriend,
+  getMe,
 } = require("./api/user");
 const { comparePassword } = require("./utils/helpers");
-const { searchMovie, getAllMovies, getMovieData } = require("./api/movies");
+const {
+  searchMovie,
+  getAllMovies,
+  getMovieData,
+  ratingMovie,
+  getMovieRating,
+} = require("./api/movies");
 const MySQLStore = require("express-mysql-session")(session);
 
 const fs = require("fs");
-const { createPlaylist, getUserPlaylists } = require("./api/playlists");
+const {
+  createPlaylist,
+  getUserPlaylists,
+  deletePlaylist,
+} = require("./api/playlists");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
+const { getAllDialogs, deleteDialog, createDialog } = require("./api/dialogs");
+const { getMessages } = require("./api/messages");
 
 const options = {
   host: "localhost",
@@ -132,11 +147,11 @@ app.use(passport.session());
 
 const PORT = 3500;
 
-app.use(cors({ origin: "http://192.168.0.103:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
+app.use(cors({ origin: "http://192.168.0.100:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
 
 app.all("/api/loginUser", function (req, res, next) {
   res.set({
-    "Access-Control-Allow-Origin": "http://192.168.0.103:5173",
+    "Access-Control-Allow-Origin": "http://192.168.0.100:5173",
     "Access-Control-Allow-Credentials": "true",
   });
   next();
@@ -148,6 +163,8 @@ app.get("/", (req, res) => {
   res.json({ messsage: "Сервер запущен" });
 });
 
+// USER
+
 app.post("/api/loginUser", passport.authenticate("local"), (req, res) => {
   res.set({
     "Access-Control-Allow-Credentials": "true",
@@ -157,11 +174,13 @@ app.post("/api/loginUser", passport.authenticate("local"), (req, res) => {
   console.log(req.user);
   if (req.user) {
     const { id, username, mail, friends } = req.user;
-    res.json({ id, username, mail, friends });
+    res.json({ id, username, mail, friends: JSON.parse(friends) });
   } else {
     res.json({ messsage: "BAD" });
   }
 });
+
+app.get("/api/getMe", getMe);
 
 app.post("/api/registerUser", registerUser);
 
@@ -173,30 +192,42 @@ app.post("/api/dismissFriendRequest", dismissRequest);
 
 app.post("/api/addFriend", addFriend);
 
+app.post("/api/deleteFriend", deleteFriend);
+
 app.post("/api/addUserAvatar", addUserAvatar);
 
 app.get("/api/getUserAvatar", getUserAvatar);
 
+app.get("/api/getMyMoviesRatings", getMyMoviesRatings);
+
+// MOVIES
+
 app.get("/api/getAllMovies", getAllMovies);
+
+app.get("/api/searchMovie", searchMovie);
+
+// MOVIE
 
 app.get("/api/getMovieData", getMovieData);
 
-app.get("/api/searchMovie", searchMovie);
+app.get("/api/getMovieRating", getMovieRating);
+
+app.post("/api/ratingMovie", ratingMovie);
 
 app.get("/api/getTrailer", (req, res) => {
   console.log("--- Загрузка видео ---");
   const range = req.headers.range;
-  console.log(range);
+  // console.log(range);
   const videoPath = "./test.mp4";
   const videoSize = fs.statSync(videoPath).size;
-  console.log(videoSize);
+  // console.log(videoSize);
   const chunkVideo = 1 * 1e6;
   const start = Number(range.replace(/\D/g, ""));
-  console.log(start);
+  // console.log(start);
   const end = Math.min(start + chunkVideo, videoSize - 1);
-  console.log("Конец", end);
+  // console.log("Конец", end);
   const contentLength = end - start + 1;
-  console.log("Длина контента", contentLength);
+  // console.log("Длина контента", contentLength);
   const headers = {
     "Content-Range": `bytes ${start}-${end}/${videoSize}`,
     "Accept-Ranges": "bytes",
@@ -212,6 +243,8 @@ app.get("/api/getTrailer", (req, res) => {
   stream.pipe(res);
 });
 
+// COMMENTS
+
 app.get("/api/getMovieComments", getMovieComments);
 
 app.post("/api/createComment", createComment);
@@ -222,7 +255,7 @@ app.get("/api/getMovieReviews", (req, res) => {
     `SELECT * FROM reviews where movieId='${movieId}'`,
     function (err, rows, fields) {
       if (err) throw err;
-      console.log("The solution is: ", rows);
+      // console.log("The solution is: ", rows);
       res.json(rows);
     }
   );
@@ -232,9 +265,25 @@ app.get("/api/getFriendsRequests", getOutcommingFriendsRequests);
 
 app.get("/api/getIncommingFriendsRequests", getIncommingFriendsRequests);
 
+// PLAYLISTS
+
 app.post("/api/createPlaylist", createPlaylist);
 
 app.get("/api/getUserPlaylists", getUserPlaylists);
+
+app.get("/api/deletePlaylist", deletePlaylist);
+
+// DIALOGS
+
+app.get("/api/getDialogs", getAllDialogs);
+
+app.get("/api/createDialog", createDialog);
+
+app.get("/api/deleteDialogs", deleteDialog);
+
+// MESSAGES
+
+app.get("/api/getMessages", getMessages);
 
 server.listen(PORT, () => {
   console.log(`Example app listening on http://localhost:${PORT}`);
