@@ -1,5 +1,7 @@
 const { sequelize } = require("../db");
 const { DataTypes } = require("sequelize");
+const { RatingModel } = require("./RatingModel");
+const { Playlist } = require("./PlaylistModel");
 
 const User = sequelize.define(
   "user",
@@ -15,5 +17,7 @@ const User = sequelize.define(
     timestamps: false,
   }
 );
+
+User.hasMany(Playlist, { foreignKey: "uid" });
 
 module.exports = { User };

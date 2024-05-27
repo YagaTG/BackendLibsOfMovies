@@ -1,6 +1,7 @@
 const { connection } = require("../db");
 const { RatingModel } = require("../models");
 const { Movie } = require("../models/MovieModel");
+const { Playlist } = require("../models/PlaylistModel");
 const { User } = require("../models/UserModel");
 const { hashPassword } = require("../utils/helpers");
 const fs = require("fs");
@@ -224,6 +225,17 @@ const getMyMoviesRatings = (req, res) => {
     .catch((err) => res.status(404).json(err));
 };
 
+const getUserProfile = (req, res) => {
+  const { userId } = req.query;
+  User.findOne({
+    where: { id: userId },
+    attributes: ["username", "img"],
+    include: [{ model: Playlist }],
+  })
+    .then((data) => res.json(data))
+    .catch((err) => res.status(404).json(err));
+};
+
 module.exports = {
   getMe,
   getOutcommingFriendsRequests,
@@ -237,4 +249,5 @@ module.exports = {
   addUserAvatar,
   getUserAvatar,
   getMyMoviesRatings,
+  getUserProfile,
 };
