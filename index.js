@@ -21,6 +21,7 @@ const {
   getMyMoviesRatings,
   deleteFriend,
   getMe,
+  getUserProfile,
 } = require("./api/user");
 const { comparePassword } = require("./utils/helpers");
 const {
@@ -37,11 +38,13 @@ const {
   createPlaylist,
   getUserPlaylists,
   deletePlaylist,
+  editPlaylist,
 } = require("./api/playlists");
-const { createServer } = require("node:http");
 const { Server } = require("socket.io");
+const { app, server } = require("./server");
 const { getAllDialogs, deleteDialog, createDialog } = require("./api/dialogs");
-const { getMessages } = require("./api/messages");
+const { getDialogMessages, postMessage } = require("./api/messages");
+const { createReview, getMovieReviews } = require("./api/review");
 
 const options = {
   host: "localhost",
@@ -60,9 +63,6 @@ const options = {
 };
 
 const sessionStore = new MySQLStore(options);
-const app = express();
-const server = createServer(app);
-const io = new Server(server);
 
 passport.serializeUser((user, done) => {
   console.log("Inside serialize");
@@ -147,11 +147,11 @@ app.use(passport.session());
 
 const PORT = 3500;
 
-app.use(cors({ origin: "http://192.168.0.100:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
+app.use(cors({ origin: "http://192.168.0.198:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
 
 app.all("/api/loginUser", function (req, res, next) {
   res.set({
-    "Access-Control-Allow-Origin": "http://192.168.0.100:5173",
+    "Access-Control-Allow-Origin": "http://192.168.0.198:5173",
     "Access-Control-Allow-Credentials": "true",
   });
   next();
@@ -200,6 +200,8 @@ app.get("/api/getUserAvatar", getUserAvatar);
 
 app.get("/api/getMyMoviesRatings", getMyMoviesRatings);
 
+app.get("/api/getUserProfile", getUserProfile);
+
 // MOVIES
 
 app.get("/api/getAllMovies", getAllMovies);
@@ -243,23 +245,17 @@ app.get("/api/getTrailer", (req, res) => {
   stream.pipe(res);
 });
 
+// REVIEWS
+
+app.post("/api/createReview", createReview);
+
 // COMMENTS
 
 app.get("/api/getMovieComments", getMovieComments);
 
 app.post("/api/createComment", createComment);
 
-app.get("/api/getMovieReviews", (req, res) => {
-  const { movieId } = req.query;
-  connection.query(
-    `SELECT * FROM reviews where movieId='${movieId}'`,
-    function (err, rows, fields) {
-      if (err) throw err;
-      // console.log("The solution is: ", rows);
-      res.json(rows);
-    }
-  );
-});
+app.get("/api/getMovieReviews", getMovieReviews);
 
 app.get("/api/getFriendsRequests", getOutcommingFriendsRequests);
 
@@ -273,17 +269,21 @@ app.get("/api/getUserPlaylists", getUserPlaylists);
 
 app.get("/api/deletePlaylist", deletePlaylist);
 
+app.post("/api/editPlaylist", editPlaylist);
+
 // DIALOGS
 
-app.get("/api/getDialogs", getAllDialogs);
+app.get("/api/getUserDialogs", getAllDialogs);
 
-app.get("/api/createDialog", createDialog);
+app.post("/api/createDialog", createDialog);
 
 app.get("/api/deleteDialogs", deleteDialog);
 
 // MESSAGES
 
-app.get("/api/getMessages", getMessages);
+app.get("/api/getDialogMessages", getDialogMessages);
+
+app.post("/api/postMessage", postMessage);
 
 server.listen(PORT, () => {
   console.log(`Example app listening on http://localhost:${PORT}`);

@@ -1,4 +1,3 @@
-const { connection } = require("../db");
 const { Comment } = require("../models/CommentModel");
 const { User } = require("../models/UserModel");
 
