@@ -1,11 +1,16 @@
 const { Op } = require("sequelize");
 const { Movie } = require("../models/MovieModel");
 const { RatingModel, MovieModel } = require("../models");
+const { sequelize } = require("../db");
 
 const getAllMovies = (req, res) => {
-  Movie.findAll().then((data) => {
-    res.json(data);
-  });
+  // const offset = page * 1;
+  // const limit = 1;
+  Movie.findAll()
+    .then((data) => {
+      res.json(data);
+    })
+    .catch((err) => res.status(404).json(err));
 };
 
 const getMovieData = (req, res) => {
@@ -16,10 +21,20 @@ const getMovieData = (req, res) => {
 };
 
 const searchMovie = (req, res) => {
-  const { movieName } = req.query;
-  Movie.findAll({ where: { name: { [Op.like]: `%${movieName}%` } } }).then(
-    (data) => res.json(data)
-  );
+  const { movieName, yearFrom, yearTo, ratingFrom, ratingTo } = req.query;
+
+  let filterQuery = ``;
+  if (yearFrom) filterQuery += ` AND year >= ${yearFrom}`;
+  if (yearTo) filterQuery += ` AND year <= ${yearTo}`;
+  if (ratingFrom) filterQuery += ` AND rating >= ${ratingFrom}`;
+  if (ratingTo) filterQuery += ` AND rating <= ${ratingTo}`;
+  sequelize
+    .query(
+      `SELECT * FROM movies WHERE name LIKE '%${movieName}%' ${filterQuery}`,
+      { type: sequelize.QueryTypes.SELECT }
+    )
+    .then((data) => res.json(data))
+    .then((err) => res.status(404).json(err));
 };
 
 const ratingMovie = (req, res) => {
