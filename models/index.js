@@ -1,6 +1,15 @@
 const { CommentModel } = require("./CommentModel");
 const { MovieModel } = require("./MovieModel");
-const { UserModel } = require("./UserModel");
+const { User } = require("./UserModel");
 const { RatingModel } = require("./RatingModel");
+const { MessageModel } = require("./MessageModel");
+const { ReviewModel } = require("./ReviewModel");
 
-module.exports = { CommentModel, MovieModel, RatingModel };
+module.exports = {
+  CommentModel,
+  MovieModel,
+  RatingModel,
+  User,
+  MessageModel,
+  ReviewModel,
+};
