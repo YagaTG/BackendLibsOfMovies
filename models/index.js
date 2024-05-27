@@ -4,6 +4,7 @@ const { User } = require("./UserModel");
 const { RatingModel } = require("./RatingModel");
 const { MessageModel } = require("./MessageModel");
 const { ReviewModel } = require("./ReviewModel");
+const { PostModel } = require("./PostModel");
 
 module.exports = {
   CommentModel,
@@ -12,4 +13,5 @@ module.exports = {
   User,
   MessageModel,
   ReviewModel,
+  PostModel
 };

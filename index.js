@@ -45,6 +45,7 @@ const { app, server } = require("./server");
 const { getAllDialogs, deleteDialog, createDialog } = require("./api/dialogs");
 const { getDialogMessages, postMessage } = require("./api/messages");
 const { createReview, getMovieReviews } = require("./api/review");
+const { getAllPosts, createPost } = require("./api/posts");
 
 const options = {
   host: "localhost",
@@ -147,11 +148,11 @@ app.use(passport.session());
 
 const PORT = 3500;
 
-app.use(cors({ origin: "http://192.168.0.198:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
+app.use(cors({ origin: "http://192.168.0.101:5173", credentials: true })); // Прописываем CORS, что можно с этого ORIGIN отправлять данные
 
 app.all("/api/loginUser", function (req, res, next) {
   res.set({
-    "Access-Control-Allow-Origin": "http://192.168.0.198:5173",
+    "Access-Control-Allow-Origin": "http://192.168.0.101:5173",
     "Access-Control-Allow-Credentials": "true",
   });
   next();
@@ -284,6 +285,12 @@ app.get("/api/deleteDialogs", deleteDialog);
 app.get("/api/getDialogMessages", getDialogMessages);
 
 app.post("/api/postMessage", postMessage);
+
+// POSTS
+
+app.get("/api/getAllPosts", getAllPosts);
+
+app.post("/api/createPost", createPost);
 
 server.listen(PORT, () => {
   console.log(`Example app listening on http://localhost:${PORT}`);
