@@ -11,6 +11,7 @@ const User = sequelize.define(
     mail: DataTypes.STRING(120),
     friends: { type: DataTypes.JSON, defaultValue: [] },
     img: { type: DataTypes.STRING(255), defaultValue: "" },
+    isAdmin: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   {
     tableName: "users",

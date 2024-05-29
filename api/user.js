@@ -41,6 +41,15 @@ const getMe = (req, res) => {
   }
 };
 
+const checkMe = (req, res) => {
+  console.log(req.user);
+  if (req.user && req.user.isAdmin) {
+    res.json(true);
+  } else {
+    res.status(401).json(false);
+  }
+};
+
 const registerUser = (req, res) => {
   const { mail, login, password } = req.body;
   const hashedPassword = hashPassword(password);
@@ -250,4 +259,5 @@ module.exports = {
   getUserAvatar,
   getMyMoviesRatings,
   getUserProfile,
+  checkMe
 };

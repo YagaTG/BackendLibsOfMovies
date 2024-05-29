@@ -8,7 +8,7 @@ const Movie = sequelize.define(
     description: DataTypes.TEXT,
     year: DataTypes.INTEGER,
     rating: { type: DataTypes.FLOAT, defaultValue: 0 },
-    img: DataTypes.STRING,
+    img: { type: DataTypes.STRING, defaultValue: "" },
   },
   {
     tableName: "movies",
