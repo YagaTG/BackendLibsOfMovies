@@ -22,6 +22,7 @@ const {
   deleteFriend,
   getMe,
   getUserProfile,
+  checkMe,
 } = require("./api/user");
 const { comparePassword } = require("./utils/helpers");
 const {
@@ -30,6 +31,9 @@ const {
   getMovieData,
   ratingMovie,
   getMovieRating,
+  createMovie,
+  addMovieImage,
+  getMovieAfisha,
 } = require("./api/movies");
 const MySQLStore = require("express-mysql-session")(session);
 
@@ -44,7 +48,12 @@ const { Server } = require("socket.io");
 const { app, server } = require("./server");
 const { getAllDialogs, deleteDialog, createDialog } = require("./api/dialogs");
 const { getDialogMessages, postMessage } = require("./api/messages");
-const { createReview, getMovieReviews } = require("./api/review");
+const {
+  createReview,
+  getMovieReviews,
+  getAllReviews,
+  publishReview,
+} = require("./api/review");
 const { getAllPosts, createPost } = require("./api/posts");
 
 const options = {
@@ -174,7 +183,7 @@ app.post("/api/loginUser", passport.authenticate("local"), (req, res) => {
   console.log(req.body);
   console.log(req.user);
   if (req.user) {
-    const { id, username, mail, friends } = req.user;
+    const { id, username, mail, friends, isAdmin } = req.user;
     res.json({ id, username, mail, friends: JSON.parse(friends) });
   } else {
     res.json({ messsage: "BAD" });
@@ -203,11 +212,19 @@ app.get("/api/getMyMoviesRatings", getMyMoviesRatings);
 
 app.get("/api/getUserProfile", getUserProfile);
 
+app.get("/api/checkMe", checkMe);
+
 // MOVIES
 
 app.get("/api/getAllMovies", getAllMovies);
 
 app.get("/api/searchMovie", searchMovie);
+
+app.post("/api/createMovie", createMovie);
+
+app.post("/api/addMovieImage", addMovieImage);
+
+app.get("/api/getMovieAfisha", getMovieAfisha);
 
 // MOVIE
 
@@ -249,6 +266,10 @@ app.get("/api/getTrailer", (req, res) => {
 // REVIEWS
 
 app.post("/api/createReview", createReview);
+
+app.get("/api/getAllReviews", getAllReviews);
+
+app.get("/api/publishReview", publishReview);
 
 // COMMENTS
 
