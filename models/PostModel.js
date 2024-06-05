@@ -9,7 +9,7 @@ const PostModel = sequelize.define(
     authorId: DataTypes.INTEGER,
     title: DataTypes.STRING,
     text: DataTypes.TEXT,
-    movieId: DataTypes.TINYINT,
+    movieId: { type: DataTypes.TINYINT, defaultValue: null },
   },
   {
     tableName: "posts",
